@@ -1,17 +1,15 @@
 rooms = []
 users = []
 
-
 class User:
     def __init__(self, name, socket, gridx, gridy):
         self.name = name
         self.socket = socket
         self.permissions = []
-        self.x = gridx
+        self.x_ = gridx
         self.y = gridy
         self.gates = {}
         self.room = None
-
 
     def set_room(self, room):
         room.add_user(self)
@@ -25,8 +23,6 @@ class User:
 
     def remove_permissions(self, *per):
         self.permissions = self.permissions - set(per)
-
-
 
 
 class Room:
@@ -53,5 +49,19 @@ class Room:
         link = self.snake[0].copy()
         self.snake.pop(-1)
         if dir == 'N':
-            link[0] -=
+            link[1] -= 1
+        elif dir == 'S':
+            link[1] += 1
+        elif dir == 'W':
+            link[0] -= 1
+        elif dir == 'E':
+            link[0] += 1
+
+
+        if
+
+
+
+
+
 
