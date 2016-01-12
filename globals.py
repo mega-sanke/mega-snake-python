@@ -2,6 +2,7 @@ rooms = []
 users = []
 
 class User:
+
     def __init__(self, name, socket, gridx, gridy):
         self.name = name
         self.socket = socket
@@ -17,6 +18,17 @@ class User:
 
     def clear_room(self):
         self.set_room(None)
+
+    def add_gate(self, id, x, y = None):
+        slot = (x,y)
+        if y is None:
+            slot = x
+
+        slots = {g.slot for g in self.gates}
+        if slot not in slots:
+            self.gates = self.gates | {Gate(id, slot)}
+
+
 
     def add_permission(self, *pers):
         self.permissions = self.permissions | set(pers)
@@ -45,20 +57,29 @@ class Room:
     def set_controller(self, user):
         self.controller = user
 
-    def move_snake(self, dir):
+    def move_snake(self, direction):
         link = self.snake[0].copy()
         self.snake.pop(-1)
-        if dir == 'N':
+        if direction == 'N':
             link[1] -= 1
-        elif dir == 'S':
+        elif direction == 'S':
             link[1] += 1
-        elif dir == 'W':
+        elif direction == 'W':
             link[0] -= 1
-        elif dir == 'E':
+        elif direction == 'E':
             link[0] += 1
 
 
-        if
+
+
+
+class Gate:
+    def __init__(self, id, x, y=None):
+        self.id = id
+        self.slot = (x, y) if y is not None else x
+
+    def __eq__(self, other):
+        return self.id == other.id and self.slot == other.slot
 
 
 
