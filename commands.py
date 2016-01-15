@@ -30,11 +30,10 @@ def connect(socket, username, x, y):
     if len([user for user in globals.users if user.username == username]):
         raise UsernameTakenError(username)
     else:
-
         globals.users.append()
 
 
 @permission('room', 'controller')
 @command('mv-snake')
 def move_snake(user, direction):
-
+    pass

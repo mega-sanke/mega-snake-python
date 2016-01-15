@@ -32,8 +32,6 @@ def add_player(socket):
 '''
 this function return a random player that has free wall, and a random free wall
 '''
-
-
 def get_player_no_wall():
     global walls
     global players
