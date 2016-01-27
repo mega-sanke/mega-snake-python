@@ -1,4 +1,5 @@
 import globals
+from globals import User, Room
 from errors import *
 
 __commands_ = {}
@@ -30,7 +31,22 @@ def connect(socket, username, x, y):
     if len([user for user in globals.users if user.username == username]):
         raise UsernameTakenError(username)
     else:
-        globals.users.append()
+        user = User(username, socket, int(x), int(y))
+        globals.users.append(user)
+
+
+def join_room(user, room_name, password):
+    """
+
+    :type user: global.User
+    :param room_name:
+    :param password:
+    :return:
+    """
+    room = next(r for r in globals.rooms if r.name == room_name)
+    if room.password is not None and room.password == password:
+        pass
+        # TODO: finish this method
 
 
 @permission('room', 'controller')
