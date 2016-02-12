@@ -1,5 +1,5 @@
 rooms = []
-users = []
+users = []  # type: list[User]
 
 
 class Slot:
