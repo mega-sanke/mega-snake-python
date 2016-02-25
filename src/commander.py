@@ -49,6 +49,7 @@ def connect(socket, username, x, y):
 	if len([user for user in globals.users if user.username == username]):
 		raise UsernameTakenError(username)
 	else:
+
 		user = User(username, socket, x, y)
 		globals.users.append(user)
 
@@ -71,3 +72,9 @@ def join_room(user, room_name, password):
 @command('mv-snake', str)
 def move_snake(user, direction):
 	pass
+
+@command('print')
+def p(user):
+	print user
+	print globals.users
+	print globals.rooms
