@@ -1,6 +1,7 @@
 import globals
 from errors import *
-from globals import User
+from globals import User, Room
+from notification import *
 
 __commands__ = {}
 
@@ -16,6 +17,7 @@ def execute_command(user, *info):
 	params = [user]
 
 	for i in xrange(1, len(info)):
+		print current_command[i]
 		params.append(current_command[i](info[i]))
 
 	current_command[0](*params)
@@ -56,7 +58,6 @@ def connect(socket, username, x, y):
 
 def join_room(user, room_name, password):
 	"""
-
 	:type user: global.User
 	:param room_name:
 	:param password:
@@ -73,8 +74,23 @@ def join_room(user, room_name, password):
 def move_snake(user, direction):
 	pass
 
+
+@command('add-room', str, str)
+def add_room(user, name, password):
+	r = Room(name, user, password)
+	globals.rooms.append(r)
+	r.add_user(user)
+
+
 @command('print')
 def p(user):
 	print user
 	print globals.users
 	print globals.rooms
+
+
+
+@command('notify')
+def notify(user):
+	print 'bseiubg'
+	notify_message(user, 'test')

@@ -74,6 +74,8 @@ while True:
 		m = m.split(',')  # type: list[str]
 		print m
 		commander.execute_command(user, *m)
+
+
 # except exceptions.IOError:
 # 	for s in __unconfirmed__:
 # 		s.close()
