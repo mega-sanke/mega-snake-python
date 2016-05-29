@@ -13,10 +13,13 @@ def __notify__(user, type, *message):
 		:param message: the contact for the message
 		:type message: list[str]
 		"""
+
 		message = list(message)
+		for (i, v) in enumerate(message):
+			message[i] = str(v)
 		message.insert(0, type)
-		message = ','.join(message)
-		user.socket.send(message)
+		message = '&&'.join(message)
+		user.socket.sendall(message + '\n')
 
 
 def notify_error(user, msg):

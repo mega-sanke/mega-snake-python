@@ -17,7 +17,6 @@ def execute_command(user, *info):
 	params = [user]
 
 	for i in xrange(1, len(info)):
-		print current_command[i]
 		params.append(current_command[i](info[i]))
 
 	current_command[0](*params)
@@ -36,7 +35,7 @@ def permission(*param):
 	def command_per(func):
 		def new_func(*args, **kwargs):
 			user = args[0]
-			if user.permission < set(param):
+			if user.permission < set(param) or 'super-admin' in user.permission:
 				return func(*args, **kwargs)
 			else:
 				raise PermissionError(*[per for per in param if per not in user.permission])
@@ -56,30 +55,29 @@ def connect(socket, username, x, y):
 		globals.users.append(user)
 
 
-def join_room(user, room_name, password):
-	"""
-	:type user: global.User
-	:param room_name:
-	:param password:
-	:return:
-	"""
-	room = next(r for r in globals.rooms if r.name == room_name)
-	if room.password is not None and room.password == password:
-		pass
-		# TODO: finish this method
-
-
 @permission('room', 'controller')
 @command('mv-snake', str)
 def move_snake(user, direction):
-	pass
+	print 'move snake!!! ', direction
+	user.room.add_move(direction)
 
 
-@command('add-room', str, str)
+@command('create-room', str, str)
 def add_room(user, name, password):
 	r = Room(name, user, password)
 	globals.rooms.append(r)
 	r.add_user(user)
+
+
+@command('join-room', str, str)
+def join_room(user, name, password):
+	r = next(r for r in globals.rooms if r.name == name)
+	if r.password == password:
+		r.add_user(user)
+		notify_message(user, 'joined room {0}'.format(name))
+	else:
+		notify_error(user, 'wrong password')
+
 
 
 @command('print')
@@ -92,5 +90,9 @@ def p(user):
 
 @command('notify')
 def notify(user):
-	print 'bseiubg'
 	notify_message(user, 'test')
+
+
+@command('eval', str)
+def eva(user, v):
+	print eval(v)
