@@ -30,5 +30,5 @@ def notify_message(user, msg):
 	__notify__(user, 'MESSAGE', msg)
 
 
-def notify_variable(user, name, value):
-	__notify__(user, 'VALUE', name, value)
+def notify_variable(user, name, value, type):
+	__notify__(user, 'VALUE', name, value, type)

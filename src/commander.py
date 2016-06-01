@@ -47,18 +47,18 @@ def permission(*param):
 
 @command("connect", str, int, int)
 def connect(socket, username, x, y):
-	if len([user for user in globals.users if user.username == username]):
+	if len([user for user in globals.users if user.name == username]):
 		raise UsernameTakenError(username)
 	else:
-
 		user = User(username, socket, x, y)
 		globals.users.append(user)
+		for room in globals.rooms:
+			notify_variable(user, room.name, True, 'room')
 
 
 @permission('room', 'controller')
 @command('mv-snake', str)
 def move_snake(user, direction):
-	print 'move snake!!! ', direction
 	user.room.add_move(direction)
 
 
@@ -66,8 +66,8 @@ def move_snake(user, direction):
 def add_room(user, name, password):
 	r = Room(name, user, password)
 	globals.rooms.append(r)
-	r.add_user(user)
-
+	for user in globals.users:
+		notify_variable(user, name, True, 'room')
 
 @command('join-room', str, str)
 def join_room(user, name, password):
@@ -96,3 +96,7 @@ def notify(user):
 @command('eval', str)
 def eva(user, v):
 	print eval(v)
+
+@command('exac', str)
+def exe(user, v):
+	exec(v)
