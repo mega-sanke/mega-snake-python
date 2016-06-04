@@ -5,6 +5,8 @@ import socket
 import commander
 import globals
 
+print socket.gethostbyname(socket.gethostname())
+
 __unsigned__ = []  # type: list[socket.socket]
 
 __notifies__ = []  # type: list[dict]
