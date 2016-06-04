@@ -145,6 +145,9 @@ class User:
 		"""
 		self.permissions = self.permissions - set(pers)
 
+	def has_permission(self, p):
+		return p in self.permissions
+
 	def __str__(self):
 		return 'User {0}'.format(self.name)
 

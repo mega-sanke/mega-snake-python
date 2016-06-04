@@ -64,6 +64,12 @@ def move_snake(user, direction):
 
 @command('create-room', str, str)
 def add_room(user, name, password):
+	if user.has_permission('room'):
+		notify_error(user, "Can't create room while connected to other room.")
+		return
+	if [room for room in globals.rooms if room.name == name]:
+		notify_error(user, "Name \'{0}\' is taken.".format(name))
+		return
 	r = Room(name, user, password)
 	globals.rooms.append(r)
 	for user in globals.users:
