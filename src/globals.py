@@ -108,6 +108,16 @@ class User:
 		"""
 		self.room.users.remove(self)
 		self.set_room(None)
+		self.remove_permission('room')
+		self.remove_permission('controller')
+		self.neighbours = {'N': False, 'S': False, 'W': False, 'E': False}
+
+		notify_variable(self, 'snake', str([]), 'slots')
+		notify_variable(self, 'alive', False, 'boolean')
+		notify_variable(self, 'link-count', 0, 'number')
+		notify_variable(self, 'gates', str([]), 'slots')
+		notify_variable(self, 'food', str([]), 'slots')
+		notify_variable(self, 'controller', False, 'boolean')
 
 	def add_gate(self, id, x, y=None):
 		"""
@@ -136,7 +146,7 @@ class User:
 		"""
 		self.permissions = self.permissions | set(pers)
 
-	def remove_permissions(self, *pers):
+	def remove_permission(self, *pers):
 		"""
 		This function is used to remove permissions from users
 
@@ -167,6 +177,8 @@ class Room(threading.Thread):
 		self.password = password
 		self.users = set([])
 		self.controller = admin
+		self.controller.add_permission('controller')
+		self.controller.remove_permission('can-exit')
 		self.alive = True
 		self.pause = 0.5
 		self.moves = []
@@ -179,6 +191,28 @@ class Room(threading.Thread):
 		self.rand_food()
 		self.start()
 
+	def remove_user(self, user):
+		"""
+
+		:param user:
+		:type user: User
+		:return:
+		:rtype:
+		"""
+
+
+		linked_users = [user.neighbours[wind][1] for wind in user.neighbours if user.neighbours[wind]]
+		ids = {gate['id'] for gate in self.gates[user]}
+		del self.gates[user]
+		for still_user in linked_users:
+			for gate in self.gates[still_user]:
+				if gate['id'] in ids:
+					self.gates[still_user].remove(gate)
+		user.clear_room()
+		user.add_permission('can-exit')
+
+
+
 	def add_user(self, *new_users):
 		if not self.users:
 			self.users = self.users | set(new_users)
@@ -187,7 +221,6 @@ class Room(threading.Thread):
 				user.set_room(self)
 				user.add_permission('room')
 			return
-
 
 		import random
 		for user in new_users:
@@ -198,8 +231,8 @@ class Room(threading.Thread):
 			neighbour_dir = random.choice(
 				[key for key in new_neighbour.neighbours if not new_neighbour.neighbours[key]])
 			user_dir = NEG[neighbour_dir]
-			new_neighbour.neighbours[neighbour_dir] = True
-			user.neighbours[user_dir] = True
+			new_neighbour.neighbours[neighbour_dir] = (True, user)
+			user.neighbours[user_dir] = (True, new_neighbour)
 
 			size = min(user.x if user_dir in {'N', 'W'} else user.y,
 					   new_neighbour.x if neighbour_dir in {'N', 'W'} else new_neighbour.y)
@@ -249,7 +282,7 @@ class Room(threading.Thread):
 		last = snake[-1].copy()
 		self.__apply_move__(link)
 		snake.append(last)
-		self.pause /= 1.2
+		self.pause /= 1.6
 		self.rand_food()
 
 	def rand_food(self):
@@ -260,13 +293,15 @@ class Room(threading.Thread):
 		slots = list(itertools.chain(*slots))
 
 		food = Slot.rand_slot(user.x, user.y)
-		while food in slots:
+		while food in slots or food in self.gates[user]:
 			food = Slot.rand_slot(user.x, user.y)
 		self.food_user = [user]
 		self.food = food
 
 	def kill(self):
 		self.alive = False
+		for user in self.users:
+			user.add_permission('can-exit')
 
 	def find_other_user_by_gate(self, gate):
 		use = (user for user in self.users if user is not self.controller)
@@ -353,7 +388,11 @@ class Room(threading.Thread):
 			notify_variable(user, 'link-count', length, 'number')
 			notify_variable(user, 'gates', str([g['slot'] for g in self.gates[user]]), 'slots')
 			notify_variable(user, 'food', str([self.food] if user in self.food_user else []), 'slots')
+		for user in users:
+			if user is not self.controller:
+				user.add_permission('can-exit')
 		notify_variable(self.controller, 'controller', True, 'boolean')
+		self.controller.remove_permission('can-exit')
 
 	def add_move(self, direction):
 		if not self.moves or not (self.moves[-1] is direction or self.moves[-1] is NEG[direction]):

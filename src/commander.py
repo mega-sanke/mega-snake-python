@@ -7,18 +7,22 @@ __commands__ = {}
 
 
 def execute_command(user, *info):
+	info = list(info)
 	if info[0] not in __commands__.keys():
 		raise NoSuchCommand(info[0])
 	current_command = __commands__[info[0]]
 
+	for i in info:
+		if i == '':
+			info.remove(i)
 	if len(info) != len(current_command):
 		raise WrongNumberOfArguments(info[0], len(current_command) - 1, len(info) - 1)
 
 	params = [user]
 
 	for i in xrange(1, len(info)):
-		params.append(current_command[i](info[i]))
-
+			params.append(current_command[i](info[i]))
+	# print info[0], 'by ', user, 'with ', params[1:]
 	current_command[0](*params)
 
 
@@ -52,6 +56,7 @@ def connect(socket, username, x, y):
 	else:
 		user = User(username, socket, x, y)
 		globals.users.append(user)
+		user.add_permission('can-exit')
 		for room in globals.rooms:
 			notify_variable(user, room.name, True, 'room')
 
@@ -84,6 +89,15 @@ def join_room(user, name, password):
 	else:
 		notify_error(user, 'wrong password')
 
+@command('log-off')
+def log_off(user):
+	if 'cat-exit' not in user.permissions:
+		notify_error(user, 'can\'t quit while the user is the controller')
+		return
+	globals.users.remove(user)
+	user.room.remove_user(user)
+	user.socket.close()
+	notify_message(user, 'exit')
 
 
 @command('print')

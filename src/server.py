@@ -67,15 +67,17 @@ while True:
 	for sock in r_unsigned:
 
 		m = sock.recv(1024)  # type: str
+		m = m.strip()
 		m = m.split(',')  # type: list[str]
 		__unsigned__.remove(sock)
 		m.insert(0, 'connect')
 		commander.execute_command(sock, *m)
-		if len(globals.users) == 1:
-			commander.execute_command(globals.users[0], 'create-room', 'test', '1234')
 
 	for user in r_users:
 		m = user.socket.recv(1024)  # type: str
-		m = m[0:-1] # removing the '\n' in the end
+		print m
+		m = m.strip()
+		# m = m[0:-1] # removing the '\n' in the end
+		print m
 		m = m.split(',')  # type: list[str]
 		commander.execute_command(user, *m)
