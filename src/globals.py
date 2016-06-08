@@ -82,7 +82,7 @@ class User:
 		"""
 		self.name = name
 		self.socket = socket
-		self.permissions = set([])
+		self.permissions = set(['can-exit'])
 		self.neighbours = {'N': False, 'S': False, 'W': False, 'E': False}
 		self.x = gridx
 		self.y = gridy
@@ -110,6 +110,7 @@ class User:
 		self.set_room(None)
 		self.remove_permission('room')
 		self.remove_permission('controller')
+		self.add_permission('can-exit')
 		self.neighbours = {'N': False, 'S': False, 'W': False, 'E': False}
 
 		notify_variable(self, 'snake', str([]), 'slots')
@@ -274,6 +275,12 @@ class Room(threading.Thread):
 			self.gates[user].append({'id': gate_id, 'slot': Slot(*slot)})
 
 	def set_controller(self, user):
+		self.controller.remove_permission('controller')
+		notify_variable(self.controller, 'controller', False, 'boolean')
+		self.controller.add_permission('can-exit')
+		user.add_permission('controller')
+		notify_variable(user, 'controller', True, 'boolean')
+		user.remove_permission_permission('can-exit')
 		self.controller = user
 
 	def eat_food(self, link):
@@ -302,6 +309,8 @@ class Room(threading.Thread):
 		self.alive = False
 		for user in self.users:
 			user.add_permission('can-exit')
+			user.remove_permission('controller')
+			notify_variable(user, 'controller', False, 'boolean')
 
 	def find_other_user_by_gate(self, gate):
 		use = (user for user in self.users if user is not self.controller)
@@ -327,7 +336,10 @@ class Room(threading.Thread):
 				instance['snake'].pop(-1)
 			instance['num'] += 1
 		notify_variable(self.controller, 'controller', False, 'boolean')
+		notify_variable(self.controller, 'can-exit', True, 'boolean')
 		self.set_controller(user1)
+		notify_variable(self.controller, 'controller', True, 'boolean')
+		notify_variable(self.controller, 'can-exit', False, 'boolean')
 		self.snake.append({'user': user1, 'num': 0, 'snake': [slot1]})
 
 	def get_snake(self, user):
@@ -388,14 +400,18 @@ class Room(threading.Thread):
 			notify_variable(user, 'link-count', length, 'number')
 			notify_variable(user, 'gates', str([g['slot'] for g in self.gates[user]]), 'slots')
 			notify_variable(user, 'food', str([self.food] if user in self.food_user else []), 'slots')
-		for user in users:
-			if user is not self.controller:
-				user.add_permission('can-exit')
-		notify_variable(self.controller, 'controller', True, 'boolean')
-		self.controller.remove_permission('can-exit')
+		# for user in users:
+		# 	if user is not self.controller:
+		# 		user.add_permission('can-exit')
+		# notify_variable(self.controller, 'controller', True, 'boolean')
+		# self.controller.remove_permission('can-exit')
 
 	def add_move(self, direction):
-		if not self.moves or not (self.moves[-1] is direction or self.moves[-1] is NEG[direction]):
+		compere_dir = self.last_move
+		if self.moves:
+			compere_dir = self.moves[-1]
+		print compere_dir, direction
+		if not ( direction is compere_dir or direction is NEG[compere_dir] ):
 			self.moves.append(direction)
 
 	def __str__(self):

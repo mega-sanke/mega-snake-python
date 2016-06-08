@@ -91,13 +91,15 @@ def join_room(user, name, password):
 
 @command('log-off')
 def log_off(user):
-	if 'cat-exit' not in user.permissions:
-		notify_error(user, 'can\'t quit while the user is the controller')
+	print user.permissions
+	if 'can-exit' not in user.permissions:
+		notify_error(user, 'can\'t quit while the user is busy')
 		return
-	globals.users.remove(user)
-	user.room.remove_user(user)
-	user.socket.close()
 	notify_message(user, 'exit')
+	globals.users.remove(user)
+	if user.room:
+		user.room.remove_user(user)
+	user.socket.close()
 
 
 @command('print')
