@@ -52,11 +52,15 @@ def permission(*param):
 @command("connect", str, int, int)
 def connect(socket, username, x, y):
 	if len([user for user in globals.users if user.name == username]):
-		raise UsernameTakenError(username)
+		class A():
+			def __init__(self, s):
+				self.socket = s
+		notify_error(A(socket), 'The username \'{0}\' is already taken'.format(username))
 	else:
 		user = User(username, socket, x, y)
 		globals.users.append(user)
 		user.add_permission('can-exit')
+		notify_message(user, 'start')
 		for room in globals.rooms:
 			notify_variable(user, room.name, True, 'room')
 
