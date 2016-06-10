@@ -53,7 +53,10 @@ def permission(*param):
 @command("connect", str, int, int)
 def connect(socket, username, x, y):
 	if len([user for user in globals.users if user.name == username]):
-		raise UsernameTakenError(username)
+		class A():
+			def __init__(self, s):
+				self.socket = s
+		notify_error(A(socket), 'The username \'{0}\' is already taken'.format(username))
 	else:
 		user = User(username, socket, x, y)
 		globals.users.append(user)
@@ -93,13 +96,15 @@ def join_room(user, name, password):
 
 @command('log-off')
 def log_off(user):
-	if 'cat-exit' not in user.permissions:
-		notify_error(user, 'can\'t quit while the user is the controller')
+	print user.permissions
+	if 'can-exit' not in user.permissions:
+		notify_error(user, 'can\'t quit while the user is busy')
 		return
-	globals.users.remove(user)
-	user.room.remove_user(user)
-	user.socket.close()
 	notify_message(user, 'exit')
+	globals.users.remove(user)
+	if user.room:
+		user.room.remove_user(user)
+	user.socket.close()
 
 
 @command('print')
