@@ -3,6 +3,7 @@ from errors import *
 from globals import User, Room
 from notification import *
 
+
 __commands__ = {}
 
 
@@ -39,10 +40,10 @@ def permission(*param):
 	def command_per(func):
 		def new_func(*args, **kwargs):
 			user = args[0]
-			if user.permission < set(param) or 'super-admin' in user.permission:
+			if user.permissions < set(param) or 'super-admin' in user.permissions:
 				return func(*args, **kwargs)
 			else:
-				raise PermissionError(*[per for per in param if per not in user.permission])
+				raise PermissionError(*[per for per in param if per not in user.permissions])
 
 		return new_func
 
@@ -57,12 +58,13 @@ def connect(socket, username, x, y):
 		user = User(username, socket, x, y)
 		globals.users.append(user)
 		user.add_permission('can-exit')
+		notify_message(user, 'start')
 		for room in globals.rooms:
 			notify_variable(user, room.name, True, 'room')
 
 
-@permission('room', 'controller')
 @command('mv-snake', str)
+@permission('room', 'controller')
 def move_snake(user, direction):
 	user.room.add_move(direction)
 
