@@ -51,8 +51,8 @@ class Slot:
 	@staticmethod
 	def rand_slot(x, y):
 		import random
-		new_x = random.randint(0, x - 1)
-		new_y = random.randint(0, y - 1)
+		new_x = random.randint(1, x - 1)
+		new_y = random.randint(1, y - 1)
 		return Slot(new_x, new_y)
 
 
@@ -177,9 +177,9 @@ class Room(threading.Thread):
 		self.admin = admin
 		self.password = password
 		self.users = set([])
-		self.controller = admin
-		self.controller.add_permission('controller')
-		self.controller.remove_permission('can-exit')
+		self.gates = dict()
+		self.add_user(admin)
+		self.set_controller(self.admin)
 		self.alive = True
 		self.pause = 0.5
 		self.moves = []
@@ -187,8 +187,6 @@ class Room(threading.Thread):
 		self.gate_id = 0
 		self.snake = [{'user': self.controller, 'num': 0, 'snake': [Slot(0, 0)]}]
 		self.food_user = []
-		self.gates = dict()
-		self.add_user(admin)
 		self.rand_food()
 		self.start()
 
@@ -200,24 +198,30 @@ class Room(threading.Thread):
 		:return:
 		:rtype:
 		"""
-
-
 		linked_users = [user.neighbours[wind][1] for wind in user.neighbours if user.neighbours[wind]]
 		ids = {gate['id'] for gate in self.gates[user]}
 		del self.gates[user]
 		for still_user in linked_users:
-			for gate in self.gates[still_user]:
+			gates = list(self.gates[still_user])
+			for gate in gates:
 				if gate['id'] in ids:
 					self.gates[still_user].remove(gate)
+			for wind in still_user.neighbours:
+				if still_user.neighbours[wind] and still_user.neighbours[wind][1] is user:
+					still_user.neighbours[wind] = None
 		user.clear_room()
 		user.add_permission('can-exit')
-
-
+		if user in self.food_user and self.users:
+			self.rand_food()
+		if not self.users:
+			globals.rooms.remove(self)
 
 	def add_user(self, *new_users):
 		if not self.users:
 			self.users = self.users | set(new_users)
 			for user in new_users:
+				if not self.admin:
+					self.admin = user
 				self.gates[user] = []
 				user.set_room(self)
 				user.add_permission('room')
@@ -275,13 +279,15 @@ class Room(threading.Thread):
 			self.gates[user].append({'id': gate_id, 'slot': Slot(*slot)})
 
 	def set_controller(self, user):
-		self.controller.remove_permission('controller')
-		notify_variable(self.controller, 'controller', False, 'boolean')
-		self.controller.add_permission('can-exit')
-		user.add_permission('controller')
-		notify_variable(user, 'controller', True, 'boolean')
-		user.remove_permission_permission('can-exit')
+		if hasattr(self, 'controller'):
+			self.controller.remove_permission('controller')
+			notify_variable(self.controller, 'controller', False, 'boolean')
+			self.controller.add_permission('can-exit')
+
 		self.controller = user
+		notify_variable(user, 'controller', True, 'boolean')
+		self.controller.add_permission('controller')
+		self.controller.remove_permission('can-exit')
 
 	def eat_food(self, link):
 		maxi = max(instance['num'] for instance in self.snake)
@@ -289,7 +295,7 @@ class Room(threading.Thread):
 		last = snake[-1].copy()
 		self.__apply_move__(link)
 		snake.append(last)
-		self.pause /= 1.6
+		self.pause /= 1
 		self.rand_food()
 
 	def rand_food(self):
@@ -299,8 +305,9 @@ class Room(threading.Thread):
 		import itertools
 		slots = list(itertools.chain(*slots))
 
-		food = Slot.rand_slot(user.x, user.y)
-		while food in slots or food in self.gates[user]:
+		food = Slot.rand_slot(user.x - 1, user.y - 1)
+
+		while food in slots or food in [g['slot'] for g in self.gates[user]] or food[0] == 0 or food[1] == 0:
 			food = Slot.rand_slot(user.x, user.y)
 		self.food_user = [user]
 		self.food = food
@@ -410,9 +417,17 @@ class Room(threading.Thread):
 		compere_dir = self.last_move
 		if self.moves:
 			compere_dir = self.moves[-1]
-		print compere_dir, direction
 		if not ( direction is compere_dir or direction is NEG[compere_dir] ):
 			self.moves.append(direction)
+
+	def restart(self, user):
+		# self.set_controller(user)
+		# self.snake = [{'user': self.controller, 'num': 0, 'snake': [Slot(0, 0)]}]
+		# self.alive = True
+		# self.rand_food()
+		# self.last_move = '-'
+		# self.moves = []
+		self.__init__(self.name, user, self.password)
 
 	def __str__(self):
 		return 'Room {0}'.format(self.name)
@@ -421,6 +436,7 @@ class Room(threading.Thread):
 		return str(self)
 
 	def run(self):
-		while self.alive:
-			self.step()
-			time.sleep(self.pause)
+		while True:
+			if self.alive:
+				self.step()
+				time.sleep(self.pause)

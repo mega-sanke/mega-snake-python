@@ -10,6 +10,9 @@ __unsigned__ = []  # type: list[socket.socket]
 
 __notifies__ = []  # type: list[dict]
 
+admin = globals.User('admin', None, 0,0)
+admin.add_permission('super-admin')
+
 server_socket = socket.socket()
 
 server_socket.bind(('0.0.0.0', 1234))
@@ -36,6 +39,24 @@ def split(*sockets):
 
     return server, unsigned, users
 
+
+def admin_user():
+    while True:
+        try:
+            m = raw_input()
+            m = m.split(' ')  # type: list[str]
+
+            commander.execute_command(admin, *m)
+        except Exception as e:
+            import sys
+            import traceback
+            a = sys.exc_info()
+            traceback.print_exception(*a)
+            del a
+
+import thread
+thread.start_new_thread ( admin_user ,())
+
 while True:
     sockets = [server_socket] + __unsigned__ + [user.socket for user in globals.users]
     rlist, wlist, xlist = select.select(sockets, sockets, sockets)  # type: tuple(list[socket.socket]
@@ -55,14 +76,12 @@ while True:
         __unsigned__.remove(sock)
         m.insert(0, 'connect')
         commander.execute_command(sock, *m)
-        if len(globals.users) == 1:
-            commander.execute_command(globals.users[0], 'create-room', 'test', '1234')
+        # if len(globals.users) == 1:
+        #     commander.execute_command(globals.users[0], 'create-room', 'test', '1234')
 
     for user in r_users:
         m = user.socket.recv(1024)  # type: str
-        print m
         m = m.strip()
         # m = m[0:-1] # removing the '\n' in the end
-        print m
         m = m.split(',')  # type: list[str]
         commander.execute_command(user, *m)

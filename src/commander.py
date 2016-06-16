@@ -40,7 +40,7 @@ def permission(*param):
 	def command_per(func):
 		def new_func(*args, **kwargs):
 			user = args[0]
-			if user.permissions < set(param) or 'super-admin' in user.permissions:
+			if set(user.permissions) <= user.permissions  or 'super-admin' in user.permissions:
 				return func(*args, **kwargs)
 			else:
 				raise PermissionError(*[per for per in param if per not in user.permissions])
@@ -85,18 +85,18 @@ def add_room(user, name, password):
 	for user in globals.users:
 		notify_variable(user, name, True, 'room')
 
+
 @command('join-room', str, str)
 def join_room(user, name, password):
 	r = next(r for r in globals.rooms if r.name == name)
 	if r.password == password:
 		r.add_user(user)
-		notify_message(user, 'joined room {0}'.format(name))
+		notify_message(user, 'joined'.format(name))
 	else:
 		notify_error(user, 'wrong password')
 
 @command('log-off')
 def log_off(user):
-	print user.permissions
 	if 'can-exit' not in user.permissions:
 		notify_error(user, 'can\'t quit while the user is busy')
 		return
@@ -105,6 +105,12 @@ def log_off(user):
 	if user.room:
 		user.room.remove_user(user)
 	user.socket.close()
+
+
+@command('restart')
+@permission('room')
+def restart(user):
+	user.room.restart(user)
 
 
 @command('print')

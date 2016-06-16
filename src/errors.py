@@ -2,7 +2,7 @@ from exceptions import TypeError, NameError
 
 class PermissionError(RuntimeError):
     def __init__(self, *per):
-        RuntimeError.__init__(self, 'user has no {0} permission'.format(self.per))
+        RuntimeError.__init__(self, 'user has no {0} permission'.format(per))
 
 
 class UsernameTakenError(RuntimeError):
